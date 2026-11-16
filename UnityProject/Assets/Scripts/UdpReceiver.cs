@@ -35,7 +35,6 @@ public class UdpReceiver : MonoBehaviour
                 {
                     receivedData = message;
                 }
-                Debug.Log("Received: " + message);
             }
             catch (SocketException ex)
             {
@@ -56,6 +55,36 @@ public class UdpReceiver : MonoBehaviour
         }
     }
 
+    private void Update()
+    {
+        string dataToProcess = null;
+        lock (dataLock)
+        {
+            if (!string.IsNullOrEmpty(receivedData))
+            {
+                dataToProcess = receivedData;
+                receivedData = null; // Clear after processing
+            }
+        }
+        if (dataToProcess != null)
+        {
+            ProcessData(dataToProcess);
+        }
+    }
+
+    private void ProcessData(string data)
+    {
+        try
+        {
+            HandData handData = JsonUtility.FromJson<HandData>(data);
+            Debug.Log($"Processed Hand Data: x={handData.x}, y={handData.y}, z={handData.z}");
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogError("Failed to process data: " + ex.Message);
+        }
+    }
+
     private void OnDestroy()
     {
         isRunning = false;
@@ -64,4 +93,12 @@ public class UdpReceiver : MonoBehaviour
             udpClient.Close();
         }
     }
+}
+
+[System.Serializable]
+public class HandData
+{
+    public float x;
+    public float y;
+    public float z;
 }
