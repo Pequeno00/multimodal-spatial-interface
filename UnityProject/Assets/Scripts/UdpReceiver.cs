@@ -12,6 +12,15 @@ public class UdpReceiver : MonoBehaviour
     private object dataLock = new object();
     private int port = 5052;
     private volatile bool isRunning;
+    [SerializeField] private float minX, maxX, minY, maxY;
+    
+    [System.Serializable]
+    public class HandData
+    {
+        public float x;
+        public float y;
+        public float z;
+    }
 
     void Start()
     {
@@ -74,10 +83,14 @@ public class UdpReceiver : MonoBehaviour
 
     private void ProcessData(string data)
     {
+        float worldX;
+        float worldY;
         try
         {
             HandData handData = JsonUtility.FromJson<HandData>(data);
-            Debug.Log($"Processed Hand Data: x={handData.x}, y={handData.y}, z={handData.z}");
+            worldX = Mathf.Lerp(minX, maxX, handData.x);
+            worldY = Mathf.Lerp(minY, maxY, 1- handData.y);
+            transform.position = new Vector3(worldX, worldY, transform.position.z);
         }
         catch (System.Exception ex)
         {
@@ -95,10 +108,3 @@ public class UdpReceiver : MonoBehaviour
     }
 }
 
-[System.Serializable]
-public class HandData
-{
-    public float x;
-    public float y;
-    public float z;
-}
