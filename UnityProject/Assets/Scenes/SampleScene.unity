@@ -557,8 +557,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0cff0e9948f6fcf4b931141ae4168953, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UdpReceiver
-  minX: -7.18
-  maxX: 7.9
+  minX: -6.7
+  maxX: 7.4
   minY: -1.13
   maxY: 6.83
 --- !u!1660057539 &9223372036854775807
