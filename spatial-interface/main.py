@@ -3,7 +3,7 @@ import mediapipe as mp
 import socket
 import json
 
-socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
 BaseOptions = mp.tasks.BaseOptions
 HandLandmarker = mp.tasks.vision.HandLandmarker
@@ -45,7 +45,7 @@ def main():
             ponta_indicador = results.hand_landmarks[0][8]
             pulso = results.hand_landmarks[0][0]
             mensagem = json.dumps({"x": ponta_indicador.x, "y": ponta_indicador.y, "z": ponta_indicador.z})
-            socket.sendto(mensagem.encode(), ("127.0.0.1", 5052))
+            sock.sendto(mensagem.encode(), ("127.0.0.1", 5052))
 
         # Break the loop on 'q' key press
         if cv2.waitKey(1) & 0xFF == ord('q'):

@@ -12,6 +12,15 @@ public class UdpReceiver : MonoBehaviour
     private object dataLock = new object();
     private int port = 5052;
     private volatile bool isRunning;
+    [SerializeField] private float minX, maxX, minY, maxY;
+    
+    [System.Serializable]
+    public class HandData
+    {
+        public float x;
+        public float y;
+        public float z;
+    }
 
     void Start()
     {
@@ -35,7 +44,6 @@ public class UdpReceiver : MonoBehaviour
                 {
                     receivedData = message;
                 }
-                Debug.Log("Received: " + message);
             }
             catch (SocketException ex)
             {
@@ -56,6 +64,40 @@ public class UdpReceiver : MonoBehaviour
         }
     }
 
+    private void Update()
+    {
+        string dataToProcess = null;
+        lock (dataLock)
+        {
+            if (!string.IsNullOrEmpty(receivedData))
+            {
+                dataToProcess = receivedData;
+                receivedData = null; // Clear after processing
+            }
+        }
+        if (dataToProcess != null)
+        {
+            ProcessData(dataToProcess);
+        }
+    }
+
+    private void ProcessData(string data)
+    {
+        float worldX;
+        float worldY;
+        try
+        {
+            HandData handData = JsonUtility.FromJson<HandData>(data);
+            worldX = Mathf.Lerp(minX, maxX, handData.x);
+            worldY = Mathf.Lerp(minY, maxY, 1- handData.y);
+            transform.position = new Vector3(worldX, worldY, transform.position.z);
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogError("Failed to process data: " + ex.Message);
+        }
+    }
+
     private void OnDestroy()
     {
         isRunning = false;
@@ -65,3 +107,4 @@ public class UdpReceiver : MonoBehaviour
         }
     }
 }
+
