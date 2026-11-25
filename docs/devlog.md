@@ -47,9 +47,16 @@ Python vision node (OpenCV + MediaPipe HandLandmarker) -> UDP JSON on `127.0.0.1
 - Bug found in review: computing the timestamp once before the loop would reuse the same value every frame and raise an error. It must be computed per frame.
 - Result: *(qualitative)* "definitely better" and no errors. This is the baseline impression to compare against measured numbers later.
 
+## 2026-11-25: Exponential smoothing in Unity
+
+- Implementation: `ProcessData` now only updates a stored `targetPosition`; `Update()` moves the Cube toward it on **every rendered frame** with `alpha = 1 - exp(-smoothing * Time.deltaTime)`, which keeps the feel independent of frame rate. The first version applied the `Lerp` inside the "new packet arrived" branch, so the Cube only stepped ~30 times per second and froze between packets; moving it outside the branch fixed that.
+- Pitfalls hit: (1) the target must be initialised to the Cube's own position in `Start()`, otherwise the Cube drifts toward the origin; (2) a field default written in code does not change a value already stored on an existing component, so `smoothing` stayed at 0 (the Cube never moved) until it was set in the Inspector; (3) assigning the value in `Start()` overrides the Inspector and makes tuning impossible; (4) values changed in Play mode are discarded on Stop.
+- Tuning *(qualitative)*: lower `smoothing` values gave less jitter; `13` was chosen as the best subjective balance.
+- Observed trade-off *(qualitative)*: at `13` there is **noticeable lag when the hand moves fast**. This is the expected cost of a fixed-strength filter: the same smoothing is applied whether the hand is still or fast, so it cannot remove jitter at rest without also delaying fast motion. This motivates comparing against the One Euro filter, which adapts its smoothing to hand speed. The `smoothing` value is a single tunable parameter, so it can be swept and measured once instrumentation exists.
+
 ## Open questions and next steps
 
-- **Smoothing (next):** exponential smoothing in `Update()` toward a stored target position, frame-rate independent via `alpha = 1 - exp(-smoothing * dt)`, then compare with the One Euro filter (Casiez et al., CHI 2012), which trades lag against jitter adaptively.
+- **Filter comparison (next):** exponential smoothing is in place (`smoothing = 13`, with lag on fast movement). Next, compare it against the One Euro filter (Casiez et al., CHI 2012), which adapts smoothing to speed to trade lag against jitter, and quantify both once instrumentation exists.
 - **Bottom-of-image loss:** remap the usable input range with `Mathf.InverseLerp`, and/or reposition the camera.
 - **Instrumentation:** add a capture timestamp (Unix ms) to the UDP payload; log latency, jitter and tracking loss to CSV; analyse in a notebook. Note that a shared timestamp measures pipeline latency (capture to Unity `Update`) only. Camera exposure and display latency need an external method such as slow-motion video.
 - **Interaction:** pinch to grab (thumb-index distance normalised by hand size, with hysteresis), then scaling.
