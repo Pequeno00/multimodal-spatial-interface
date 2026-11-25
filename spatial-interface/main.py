@@ -1,3 +1,5 @@
+import time
+
 import cv2;
 import mediapipe as mp
 import socket
@@ -12,12 +14,10 @@ VisionRunningMode = mp.tasks.vision.RunningMode
 
 options = HandLandmarkerOptions(
     base_options=BaseOptions(model_asset_path='hand_landmarker.task'),
-    running_mode=VisionRunningMode.IMAGE,
+    running_mode=VisionRunningMode.VIDEO,
     num_hands=1
 )
 detector = HandLandmarker.create_from_options(options)
-
-
 
 def main():
     # Initialize video capture
@@ -26,6 +26,7 @@ def main():
         print("Error: Could not open video stream.")
         return
 
+    start = time.monotonic()
     while True:
         # Capture frame-by-frame
         ret, frame = cap.read()
@@ -40,7 +41,9 @@ def main():
         imagem_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
         mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=imagem_rgb)
-        results = detector.detect(mp_image)
+
+        timestamp_ms = int((time.monotonic() - start) * 1000)
+        results = detector.detect_for_video(mp_image, timestamp_ms)
         if (results.hand_landmarks):
             ponta_indicador = results.hand_landmarks[0][8]
             pulso = results.hand_landmarks[0][0]
