@@ -561,6 +561,7 @@ MonoBehaviour:
   maxX: 7.4
   minY: -1.13
   maxY: 6.83
+  smoothing: 13
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
